@@ -1,0 +1,130 @@
+version: '3.8'
+
+services:
+  auth-user-service:
+    env_file:
+      - .env
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: auth-user-service
+    container_name: auth-user-service
+    restart: always
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BROKER: ${KAFKA_BROKER}
+      KAFKA_GROUP_ID: ${KAFKA_GROUP_ID}
+    depends_on:
+      db:
+        condition: service_started
+      redis:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+
+    ports:
+      - "6060:6060"
+    networks:
+      - my-network
+
+  notification-service:
+    env_file:
+      - .env
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: notification-service
+    container_name: notification-service
+    restart: always
+    environment:
+      KAFKA_BROKER: ${KAFKA_BROKER}
+      KAFKA_GROUP_ID: ${KAFKA_GROUP_ID}
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - my-network
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    networks:
+      - my-network
+
+  redis:
+    image: redis:alpine
+    container_name: my_redis_cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - my-network
+   
+  gateway:
+    build:
+      context: ./apps/api-gateway
+      dockerfile: Dockerfile
+    image: hirebridge-gateway:latest
+    ports:
+      - "8080:80"
+    depends_on:
+      - auth-user-service
+    networks:
+      - my-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_CLIENT_PORT}
+      ZOOKEEPER_TICK_TIME: ${ZOOKEEPER_TICK_TIME}
+    ports:
+      - "${ZOOKEEPER_CLIENT_PORT}:${ZOOKEEPER_CLIENT_PORT}"
+    networks:
+      - my-network # Đã thêm network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "${KAFKA_PORT_EXTERNAL}:${KAFKA_PORT_EXTERNAL}"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:${ZOOKEEPER_CLIENT_PORT}
+      # Setup Listener động theo biến môi trường
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:${KAFKA_PORT_EXTERNAL},PLAINTEXT_INTERNAL://${KAFKA_HOST}:${KAFKA_PORT_INTERNAL}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    restart: always
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    networks:
+      - my-network
+
+volumes:
+  redis_data:
+  kafka_data:
+
+networks:
+  my-network:
+    driver: bridge

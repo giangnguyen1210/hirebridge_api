@@ -1,0 +1,26 @@
+{{#> layout }}
+<tr>
+  <td valign="middle" class="hero bg_white" style="padding: 3em 0 2em 0;">
+    {{!-- <img src="https://bimnextapi.dpunity.com/images/email.png" alt="" style="width: 150px; max-width: 600px; height: auto; margin: auto; display: block;"> --}}
+    <div class="text" style="text-align: center;">
+      <h4> Xin chào, {{username}}!</h4>
+    </div>
+  </td>
+</tr>
+<tr>
+  <td valign="middle" class="hero bg_white" style="padding: 2em 0 4em 0;">
+    <table>
+      <tr>
+        <td>
+          <div class="text" style="padding: 0 2.5em; text-align: center;">
+            <h2>{{activationCode}}</h2>
+            <h3>Email này được sử dụng để đăng ký tài khoản tại HIRE-BRIDGE. </h3>
+            <h5>Trên đây là mã xác thực của bạn. Hoặc nhấn vào bên dưới để hoàn thành đăng ký.</h5>
+            <p><a href="{{activationLink}}" class="btn btn-primary">Xác Thực</a></p>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </td>
+</tr>
+{{/layout}}
