@@ -11,7 +11,7 @@ export default () => ({
     postgres_user: process.env.POSTGRES_USER,
     postgres_password: process.env.POSTGRES_PASSWORD,
     postgres_db: process.env.POSTGRES_DB,
-    postgres_port: process.env.POSTGRES_PORT ? parseInt(process.env.POSTGRES_PORT, 10) : 5432,
+    postgres_port: process.env.POSTGRES_PORT ? process.env.POSTGRES_PORT : 5432,
   },
   redis: {
     host: process.env.REDIS_HOST || 'localhost',

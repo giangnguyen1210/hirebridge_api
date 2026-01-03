@@ -99,7 +99,27 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 
 ## build libs
 
-## build 1 service: docker-compose up -d --build notification-service
+## build 1 service:
+
+```bash
+$ docker-compose up -d --build notification-service
+```
+
 # add new service to repo
 
-nest generate app job-service
+```bash
+$ nest generate app job-service
+```
+
+# generate resource inside a service
+
+```bash
+$ nest g resource jobs --project job-service
+```
+
+# backup db & restore db typeorm
+```bash
+$ mkdir -p /Users/hongnguyen/Documents/hirebridge/hirebridge/backups
+$ docker exec hirebridge-db-1 pg_dump -U <POSTGRES_USER> -d <POSTGRES_DB> > backups/user_db_backup_$(date +%Y%m%d_%H%M%S).sql
+$ docker exec -i hirebridge-db-1 psql -U <POSTGRES_USER> -d <POSTGRES_DB> < backups/user_db_backup_<timestamp>.sql
+```

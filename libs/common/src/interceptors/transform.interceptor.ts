@@ -21,19 +21,31 @@ export class TransformInterceptor<T>
   ): Observable<ApiResponse<T>> {
     const handler = context.getHandler();
     
-    // 1. Get the custom message from the decorator
+    // Get the custom message from the decorator
     const messageFromDecorator = this.reflector.get<string>(
       RESPONSE_MESSAGE_KEY,
       handler,
     );
 
     return next.handle().pipe(
-      map((data) => ({
-        statusCode: context.switchToHttp().getResponse().statusCode,
-        // 2. Priority: Decorator -> Data object message -> Default
-        message: messageFromDecorator || data?.message || 'Operation successful',
-        data: data?.result || data,
-      })),
+      map((data) => {
+        const response = context.switchToHttp().getResponse();
+        const statusCode = response.statusCode;
+
+        // Extract data, message, and meta from the service response
+        const message = messageFromDecorator || data?.message || 'Operation successful';
+        const responseData = data?.data !== undefined ? data.data : (data?.result || data);
+        const meta = data?.meta;
+
+        return {
+          success: true,
+          statusCode,
+          message,
+          data: responseData,
+          meta,
+          timestamp: new Date().toISOString(),
+        };
+      }),
     );
   }
 }

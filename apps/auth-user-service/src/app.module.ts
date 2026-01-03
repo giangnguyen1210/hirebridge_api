@@ -4,7 +4,7 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from './config/configuration';
 import { UnitOfWork } from './common/database/unit-of-work';
-import { AuthUsersModule } from './auth-user/auth-user.module';
+import { AuthUsersModule } from './modules/auth-user.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import redisStore from 'cache-manager-redis-store';
 import { CommonModule } from '@app/common';
@@ -34,7 +34,6 @@ import { UserContextGuard } from '@app/common/guards';
         };
       },
     }),
-
     TypeOrmModule.forRootAsync({
       useFactory: (configService: ConfigService) => {
         const host = configService.get('database.host');
@@ -65,7 +64,6 @@ import { UserContextGuard } from '@app/common/guards';
       },
       inject: [ConfigService],
     }),
-
     AuthUsersModule,
     
   ],

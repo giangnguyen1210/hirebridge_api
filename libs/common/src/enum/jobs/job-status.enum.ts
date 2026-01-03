@@ -1,0 +1,7 @@
+export enum JobStatus {
+  OPEN = 'OPEN',
+  BIDDING = 'BIDDING',
+  NEGOTIATING = 'NEGOTIATING',
+  SIGNED = 'SIGNED',
+  CLOSED = 'CLOSED',
+}

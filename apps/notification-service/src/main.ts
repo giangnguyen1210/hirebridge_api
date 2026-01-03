@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { NotificationServiceModule } from './notification-service.module';
+import { NotificationServiceModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
