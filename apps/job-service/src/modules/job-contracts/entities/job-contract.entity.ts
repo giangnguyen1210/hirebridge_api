@@ -8,7 +8,10 @@ import { JobContractStatus, PaymentType } from '@app/common';
 @Entity('job_contracts')
 export class JobContract extends BaseEntity {
   @Column()
-  userId: string;
+  representativeAId: string;
+
+  @Column()
+  representativeBId: string;
   
   @Column()
   jobId: string;
@@ -16,7 +19,7 @@ export class JobContract extends BaseEntity {
   @Column()
   terms: string;
 
-  @Column()
+  @Column({ default: JobContractStatus.CREATED })
   status: JobContractStatus;
 
   @Column({ nullable: true })

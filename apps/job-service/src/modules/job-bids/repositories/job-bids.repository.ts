@@ -1,6 +1,7 @@
 import { InjectRepository } from "@nestjs/typeorm";
 import { JobBid } from "../entities/job-bid.entity";
 import { Repository } from "typeorm";
+import { FilterJobBidDto } from "../dto/filter-job-bid.dto";
 
 export class JobBidRepository {
     constructor(
@@ -8,31 +9,37 @@ export class JobBidRepository {
     private jobBidRepository: Repository<JobBid>,
   ) {}
 
-    async createJobBid(jobBid: JobBid) {
+  async create(jobBid: JobBid) {
       return await this.jobBidRepository.save(jobBid);
     }
 
-    async findJobBidById(id: string) {
+  async findOne(id: string) {
       return await this.jobBidRepository.findOne({ where: { id } });
     }
 
-    async findJobBidByJobId(jobId: string) {
-      return await this.jobBidRepository.find({ where: { jobId } });
+  async findAll(filterJobBidDto: FilterJobBidDto) {
+    const where: any = {};
+
+    if (filterJobBidDto.jobId) {
+      where.jobId = filterJobBidDto.jobId;
     }
 
-    async findJobBidByUserId(userId: string) {
-      return await this.jobBidRepository.find({ where: { userId } });
+    if (filterJobBidDto.userId) {
+      where.userId = filterJobBidDto.userId;
     }
 
-    async findJobBidByJobIdAndUserId(jobId: string, userId: string) {
-      return await this.jobBidRepository.findOne({ where: { jobId, userId } });
+    if (filterJobBidDto.status) {
+      where.status = filterJobBidDto.status;
     }
 
-    async updateJobBid(id: string, jobBid: JobBid) {
-      return await this.jobBidRepository.update(id, jobBid);
-    }
+    return await this.jobBidRepository.find({ where });
+  }
 
-    async deleteJobBid(id: string) {
-      return await this.jobBidRepository.delete(id);
-    }
+  async update(id: string, jobBid: JobBid) {
+    return await this.jobBidRepository.update(id, jobBid);
+  }
+
+  async delete(id: string) {
+    return await this.jobBidRepository.delete(id);
+  }
 }

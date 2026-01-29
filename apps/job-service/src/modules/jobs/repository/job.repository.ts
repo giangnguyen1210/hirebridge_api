@@ -3,7 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { JobEntity } from "../entities/job.entity";
 import { ILike, Repository } from "typeorm";
 import { FilterJobDto } from "../dto/filter-job.dto";
-import { JobStatus } from "@app/common";
+import { JobStatus, JobType } from "@app/common";
 
 @Injectable()
 export class JobRepository {
@@ -17,30 +17,54 @@ export class JobRepository {
   }
 
   async findAll(filterJobDto: FilterJobDto) {
-    const where: any = {};
-
-    if (filterJobDto.title) {
-      where.title = ILike(`%${filterJobDto.title}%`);
-    }
+    // Build base conditions for non-search filters
+    const baseConditions: any = {};
 
     if (filterJobDto.status) {
-      where.status = filterJobDto.status as JobStatus;
+      baseConditions.status = filterJobDto.status as JobStatus;
     }
 
     if (filterJobDto.isNeedGroup !== undefined) {
-      where.isNeedGroup = filterJobDto.isNeedGroup;
+      baseConditions.isNeedGroup = filterJobDto.isNeedGroup;
     }
 
     if (filterJobDto.createdBy) {
-      where.createdBy = filterJobDto.createdBy;
+      baseConditions.createdBy = filterJobDto.createdBy;
     }
 
     if (filterJobDto.updatedBy) {
-      where.updatedBy = filterJobDto.updatedBy;
+      baseConditions.updatedBy = filterJobDto.updatedBy;
     }
 
-    console.log("where", where);
-    return this.jobRepository.find({ where });
+    if (filterJobDto.jobType) {
+      baseConditions.jobType = filterJobDto.jobType as JobType;
+    }
+
+    // Build where conditions - use array for OR conditions when searching
+    let where: any;
+
+    if (filterJobDto.search) {
+      // Create OR conditions for search across multiple fields
+      where = [
+        { title: ILike(`%${filterJobDto.search}%`), ...baseConditions },
+        { description: ILike(`%${filterJobDto.search}%`), ...baseConditions },
+        { location: ILike(`%${filterJobDto.search}%`), ...baseConditions },
+        { jobType: ILike(`%${filterJobDto.search}%`), ...baseConditions },
+      ];
+    } else {
+      where = baseConditions;
+    }
+
+    const [result, total] = await this.jobRepository.findAndCount({
+      where,
+      skip: filterJobDto.calculatedSkip,
+      take: filterJobDto.limit,
+      order: {
+        createdAt: 'DESC', // Default sorting by newest first
+      },
+    });
+
+    return { result, total };
   }
 
   async findOne(id: string) {

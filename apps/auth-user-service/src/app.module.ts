@@ -4,12 +4,15 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from './config/configuration';
 import { UnitOfWork } from './common/database/unit-of-work';
-import { AuthUsersModule } from './modules/auth-user.module';
+import { AuthModule } from './auth/auth.module';
+import { UserModule } from './user/user.module';
+import { ProfileModule } from './profile/profile.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import redisStore from 'cache-manager-redis-store';
 import { CommonModule } from '@app/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { UserContextGuard } from '@app/common/guards';
+import { ClassSerializerInterceptor } from '@nestjs/common';
 
 @Global()
 @Module({
@@ -22,15 +25,31 @@ import { UserContextGuard } from '@app/common/guards';
     CacheModule.registerAsync({
       isGlobal: true,
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => {
-        console.log('redis host:', config.get('redis.host')); // sẽ log được
-        console.log('redis pỏt:', config.get('redis.port')); // sẽ log được
+      useFactory: async (config: ConfigService) => {
+        const redisHost = config.get<string>('redis.host') || 'localhost';
+        const redisPort = config.get<number>('redis.port') || 6379;
 
         return {
           store: redisStore as any,
-          host: config.get<string>('redis.host') || 'localhost',
-          port: config.get<number>('redis.port') || 6379,
-          ttl: 600,
+          host: redisHost,
+          port: redisPort,
+          ttl: 0, // 0 = no expiration (we'll handle TTL per key)
+          // Retry strategy for Redis connection
+          retry_strategy: (options: any) => {
+            if (options.error && options.error.code === 'ECONNREFUSED') {
+              console.error('❌ Redis connection refused. Retrying...');
+            }
+            if (options.total_retry_time > 1000 * 60 * 60) {
+              // End reconnecting after a specific timeout
+              return new Error('Redis retry time exhausted');
+            }
+            if (options.attempt > 10) {
+              // End reconnecting with built in error
+              return undefined;
+            }
+            // Reconnect after
+            return Math.min(options.attempt * 100, 3000);
+          },
         };
       },
     }),
@@ -64,7 +83,9 @@ import { UserContextGuard } from '@app/common/guards';
       },
       inject: [ConfigService],
     }),
-    AuthUsersModule,
+    UserModule,
+    AuthModule,
+    ProfileModule,
     
   ],
   providers: [
@@ -73,6 +94,10 @@ import { UserContextGuard } from '@app/common/guards';
     {
       provide: APP_GUARD,
       useClass: UserContextGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ClassSerializerInterceptor,
     },
   ],
   exports: [UnitOfWork],

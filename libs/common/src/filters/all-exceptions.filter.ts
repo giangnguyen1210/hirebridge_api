@@ -21,6 +21,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'An unexpected error occurred';
     let code = 'INTERNAL_SERVER_ERROR';
+    let details: any = undefined;
 
     // Check if this is a NestJS HttpException
     if (exception && typeof exception === 'object' && 'getStatus' in exception) {
@@ -31,9 +32,25 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const exceptionResponse = httpException.getResponse();
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
+        code = this.getErrorCode(status);
       } else if (exceptionResponse && typeof exceptionResponse === 'object') {
-        message = exceptionResponse.message || message;
-        code = exceptionResponse.error || this.getErrorCode(status);
+        // Handle class-validator validation errors (from ValidationPipe)
+        if (Array.isArray(exceptionResponse.message)) {
+          message = 'Validation failed';
+          code = 'VALIDATION_ERROR';
+          // Format validation errors for better readability
+          details = exceptionResponse.message.map((error: any) => {
+            if (typeof error === 'string') {
+              return error;
+            }
+            // If it's a validation error object, return it as-is
+            return error;
+          });
+        } else {
+          message = exceptionResponse.message || message;
+          code = exceptionResponse.error || this.getErrorCode(status);
+          details = exceptionResponse.details;
+        }
       } else {
         code = this.getErrorCode(status);
       }
@@ -48,7 +65,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const errorResponse = new ErrorResponseDto(
       message,
       code,
-      undefined, // Don't expose internal error details in production
+      details, // Include validation details for debugging
       request.url,
       request.headers['x-request-id'] as string,
     );

@@ -14,5 +14,8 @@ export default () => ({
   kafka: {
     KAFKA_BROKER: process.env.KAFKA_BROKER || 'localhost:29092',
     KAFKA_GROUP_ID: process.env.KAFKA_GROUP_ID || 'auth-user-service-group',
+  },
+  services: {
+    authServiceUrl: process.env.AUTH_SERVICE_URL || 'http://localhost:3001',
   }
 });

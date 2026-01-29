@@ -7,6 +7,9 @@ RUN rm /etc/nginx/conf.d/default.conf
 # 3. Copy file nginx.conf chính của bạn vào container
 COPY nginx.conf /etc/nginx/nginx.conf
 
+# 3.5. Copy CORS map configuration
+COPY cors-map.conf /etc/nginx/cors-map.conf
+
 # 4. Copy thư mục chứa các file routing (auth.conf, product.conf...)
 COPY conf.d/ /etc/nginx/conf.d/
 

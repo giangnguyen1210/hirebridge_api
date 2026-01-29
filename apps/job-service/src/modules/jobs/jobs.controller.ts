@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseInterceptors } from '@nestjs/common';
 import { JobsService } from './jobs.service';
 import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
@@ -16,13 +16,19 @@ export class JobsController {
   }
 
   @Get()
-  findAll(@Query() filterJobDto: FilterJobDto) {
-    return this.jobsService.findAll(filterJobDto);
+  findAll(
+    @Query() filterJobDto: FilterJobDto,
+    @Query('includeUser') includeUser?: string,
+  ) {
+    return this.jobsService.findAll(filterJobDto, includeUser === 'true');
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.jobsService.findOne(id);
+  findOne(
+    @Param('id') id: string,
+    @Query('includeUser') includeUser?: string,
+  ) {
+    return this.jobsService.findOne(id, includeUser === 'true');
   }
 
   @Patch(':id')

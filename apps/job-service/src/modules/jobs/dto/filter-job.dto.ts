@@ -1,14 +1,19 @@
 import { IsOptional, IsString, IsBoolean } from "class-validator";
 import { Transform } from "class-transformer";
+import { PaginationDto } from "@app/common";
 
-export class FilterJobDto {
+export class FilterJobDto extends PaginationDto {
   @IsOptional()
   @IsString()
-  title?: string;
+  search?: string;
 
   @IsOptional()
   @IsString()
   status?: string;
+
+  @IsOptional()
+  @IsString()
+  jobType?: string;
 
   @IsOptional()
   @Transform(({ value }) => value === 'true' || value === true)

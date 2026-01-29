@@ -1,4 +1,4 @@
-import { JobStatus } from "@app/common";
+import { JobStatus, JobType } from "@app/common";
 import { Column, Entity } from "typeorm";
 import { BaseEntity } from "../../share/entities/base.entity";
 
@@ -27,4 +27,16 @@ export class JobEntity extends BaseEntity {
 
   @Column({ nullable: true })
   updatedBy: string;
+
+  @Column({ nullable: true })
+  location: string;
+
+  @Column({ nullable: true })
+  jobType: JobType;
+
+  @Column({ nullable: true })
+  deadline: Date;
+
+  @Column({ type: 'text', array: true, nullable: true })
+  skills: string[];
 }

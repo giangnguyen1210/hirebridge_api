@@ -63,6 +63,36 @@ services:
     networks:
       - my-network
 
+  project-service:
+    env_file:
+      - .env
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: project-service
+    container_name: project-service
+    restart: always
+    environment:
+      DATABASE_URL: ${DATABASE_URL_PROJECT}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BROKER: ${KAFKA_BROKER}
+      KAFKA_GROUP_ID: ${KAFKA_GROUP_ID}
+    depends_on:
+      db_job:
+        condition: service_started
+      redis:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+    ports:
+      - "6062:6062"
+    networks:
+      - my-network
+
   notification-service:
     env_file:
       - .env
@@ -101,6 +131,17 @@ services:
       POSTGRES_DB: ${POSTGRES_DB_JOB}
     ports:
       - "5433:5432"
+    networks:
+      - my-network
+  
+  db_project:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_PROJECT}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_PROJECT}
+      POSTGRES_DB: ${POSTGRES_DB_PROJECT}
+    ports:
+      - "5434:5432"
     networks:
       - my-network
 

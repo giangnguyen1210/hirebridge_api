@@ -18,7 +18,13 @@
       "entryFile": "main",
       "sourceRoot": "apps/auth-user-service/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/auth-user-service/tsconfig.app.json"
+        "tsConfigPath": "apps/auth-user-service/tsconfig.app.json",
+        "assets": [
+          {
+            "include": "infrastructure/database/migrations/**/*",
+            "outDir": "dist/apps/auth-user-service"
+          }
+        ]
       }
     },
     "common": {

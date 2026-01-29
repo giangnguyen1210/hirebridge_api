@@ -1,4 +1,5 @@
 export enum JobContractStatus {
+  CREATED = 'CREATED',
   SIGNED = 'SIGNED',
   DRAFT = 'DRAFT',
   VOID = 'VOID',
